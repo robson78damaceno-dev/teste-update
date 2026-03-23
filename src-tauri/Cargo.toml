@@ -1,0 +1,23 @@
+[package]
+name = "mjc-player"
+version = "0.1.0"
+description = "MJC Player - controlador de áudio"
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+name = "mjc_player_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-updater = "2"
+tokio = { version = "1", features = ["time"] }
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]

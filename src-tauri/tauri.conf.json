@@ -1,0 +1,76 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "MJC Player",
+  "version": "0.1.0",
+  "identifier": "com.mjc.player",
+  "build": {
+    "frontendDist": "../frontend/out",
+    "devUrl": "http://localhost:4300",
+    "beforeDevCommand": "npm run frontend:dev",
+    "beforeBuildCommand": "npm run frontend:build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "splash",
+        "url": "/splash.html",
+        "width": 960,
+        "height": 600,
+        "decorations": false,
+        "transparent": false,
+        "center": true,
+        "backgroundColor": "#0b0c10"
+      },
+      {
+        "label": "main",
+        "title": "MJC Player",
+        "width": 1400,
+        "height": 900,
+        "minWidth": 800,
+        "minHeight": 600,
+        "visible": false,
+        "backgroundColor": "#0b0c10"
+      }
+    ],
+    "security": {
+      "csp": {
+        "default-src": "'self' asset: https://asset.localhost",
+        "connect-src": "ipc: http://ipc.localhost http://127.0.0.1:4100 http://localhost:4100 http://10.3.7.57:3000",
+        "media-src": "'self' asset: http://asset.localhost blob: data: http://127.0.0.1:4100 http://localhost:4100 http://10.3.7.57:3000",
+        "img-src": "'self' asset: http://asset.localhost blob: data: http://127.0.0.1:4100 http://localhost:4100 http://10.3.7.57:3000",
+        "style-src": "'unsafe-inline' 'self'"
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "nsis": {
+        "languages": ["PortugueseBR"],
+        "displayLanguageSelector": false
+      }
+    },
+    "longDescription": "Controlador de áudio em estilo touchpad para reprodução e gestão de faixas.",
+    "shortDescription": "MJC Player - controlador de áudio",
+    "category": "Music",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "REPLACE_WITH_TAURI_UPDATER_PUBLIC_KEY",
+      "endpoints": [
+        "https://github.com/OWNER/REPO/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

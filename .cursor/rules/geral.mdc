@@ -1,0 +1,93 @@
+---
+name: Regras gerais – MJC Player
+description: Convenções, escopo do MVP, API e estrutura do projeto MJC Player.
+alwaysApply: true
+---
+
+# Escopo do projeto (MVP)
+
+**MJC Player** é um controlador de áudio em estilo “touchpad” para reprodução e gestão de faixas, inspirado no Sports Sounds Pro. Interface em full-screen, visual glass (estilo iOS) e paleta de cores definida (primária e secundária).
+
+## Funcionalidades principais
+- **Biblioteca de faixas**: listagem vinda da API; botão “Escanear músicas” dispara `POST /tracks/scan` e atualiza a lista.
+- **Reprodução**: play/pause, seek (clique na waveform ou setas no teclado), velocidade (0.5x–1.5x), repeat (off/one/all), região de corte (cut in/out) e fades (in/out com presets 2s/5s/10s).
+- **Layout em 3 colunas**:
+  - **Esquerda (ScenesSidebar)**: logo (`public/logo.jfif`), bancos A–J, cenas por banco (Pre-Game, etc.), “Adicionar página”, “Modo Monitor”.
+  - **Centro**: header (menus Ficheiro/Editar/Config/Ferramentas/Temas/Log/Ajuda, Playlists, Estéreo/Normalização/Instant Play, Escanear), painel de controles (Cue, Fade, Auto Fade, Cross Fade, Pausar, Parar, etc.), bloco “Agora tocando” + “Transmissão” (slider %, tempos Total/Decorrido/Restante, waveform, VU dinâmicos L/R, espectrograma), Reprodução/Edição, Filtros rápidos, grid de faixas (TrackCard: artista, título, duração, estado a tocar / selecionado).
+  - **Direita (RightSidebar)**: Estéreo/Normalização/Instant Play, tabs (Pesquisa, Notas, Plantel, Escalação, Atalhos), pesquisa e lista de faixas com Cue/Add.
+- **Rodapé**: Barra “A tocar” / “A seguir” + Saltar + Playlist; **FooterBar** com “Dispositivo de transmissão” e “Dispositivo de monitor” (lista real de saídas de áudio via `navigator.mediaDevices.enumerateDevices()`; `setSinkId` no elemento de áudio), e totais Faixas / Duração.
+- **Áudio**: um único `<audio>`; grafo Web Audio (MediaElementSource → AnalyserNode → destination) partilhado para VU em tempo real e espectrograma; waveform a partir de peaks decodificados (Web Audio); seek e região de reprodução no TouchpadView.
+
+## Marca e assets
+- Nome: **MJC Player** (título da página e header).
+- Favicon: `public/botao-play.ico`.
+- Logo na sidebar: `public/logo.jfif` (fallback texto “Logo” se falhar).
+- Estilos: variáveis CSS em `globals.css` (paleta primária e secundária, glass-bg, glass-border, etc.); objetivo é usar **classes CSS normais**, sem Tailwind (ver secção CSS).
+
+## Variáveis de ambiente
+- **Frontend** (Next.js): `NEXT_PUBLIC_API_BASE_URL` (ex.: `http://localhost:4100`) – obrigatória para chamadas à API.
+- **Backend** (NestJS): `PORT` (default 4100); `DATABASE_URL` (ex.: `file:./dev.db` para SQLite/Prisma). Não usar fallback silencioso; falhar no arranque se faltar variável obrigatória.
+
+---
+
+# API (Backend)
+
+- **Base URL**: configurada por `NEXT_PUBLIC_API_BASE_URL` no frontend; backend escuta em `PORT` (default 4100).
+- **CORS**: habilitado (origin `*` no MVP).
+- **Endpoints**:
+  - `GET /tracks` – lista faixas indexadas; query params opcionais (filtros). Retorno: array de `TrackResponseDto` (id, filePath, fileName, title, artist, album, bpm?, durationMs, coverImagePath?).
+  - `GET /tracks/:id` – uma faixa por id.
+  - `GET /tracks/:id/cover` – imagem da capa (stream; 404 se não existir).
+  - `GET /tracks/:id/stream` – streaming de áudio (mp3/wav/flac/m4a).
+  - `POST /tracks/scan` – dispara scan do diretório configurado, sincroniza com a base e retorna a lista atualizada de faixas.
+
+Frontend centraliza chamadas em `frontend/src/lib/api/tracks-api.ts`: `fetchTracks()`, `scanTracks()`, `getTrackStreamUrl(id)`, `getTrackCoverUrl(id)`, `getApiBaseUrl()`.
+
+---
+
+# Estrutura do projeto
+
+- **Frontend** (`frontend/`): Next.js (App Router). Página principal carrega faixas via `fetchTracks()` no Server Component e renderiza `TouchpadView` com `initialTracks`. Componentes em `src/components/` (layout: AppHeader, ScenesSidebar, ControlPanel, FooterBar, RightSidebar, BottomNowPlayingBar; music: TouchpadView, NowPlayingBar, PadGrid, TrackCard, VuMeters, WaveformFromEngine, SpectrogramCanvas, FiltersBar). Hooks em `src/hooks/` (ex.: `useAudioLevels`). API client e tipos em `src/lib/api` e `src/components/music/types.ts`.
+- **Backend** (`backend/`): NestJS. Módulo `tracks` (controller, service, repository, DTOs, scanner); Prisma para persistência. Scan e paths de áudio/capas conforme configuração do scanner.
+
+---
+
+# TypeScript / JavaScript
+- Nunca use `any`; evite ao máximo `as`.
+- Type-safety de ponta a ponta; named exports; evite default exports (salvo exceções do framework).
+- Evite barrel exports fora de libs internas.
+- Prefira `async/await`; variáveis não usadas com `_` ou remova.
+- Sem magic strings/numbers; use constantes ou enums.
+- Nomes: camelCase (variáveis, funções), PascalCase (classes, tipos, componentes), UPPER_SNAKE_CASE (constantes globais), kebab-case (arquivos e pastas).
+
+# React (Next.js)
+- App Router; Server Components por padrão; Client Components só quando necessário.
+- Não buscar dados em `useEffect`; usar Server Actions ou React Query.
+- Centralizar chamadas HTTP em `src/lib/api`.
+- Componentes o mais puros possível; evite lógica pesada no JSX.
+
+# CSS / Estilos
+- **Usar classes CSS normais (semânticas), sem Tailwind.**
+- Estilos em `globals.css` ou ficheiros CSS por página/componente (CSS Modules ou `.css` importados).
+- Nomes de classes em kebab-case (ex.: `.glass-panel`, `.btn-primary`, `.now-playing-bar`).
+- Variáveis em `:root` para cores e temas; usar `var(--nome-da-variavel)` no CSS.
+- Proibido adicionar novas utility classes ao estilo Tailwind; ao tocar no código, migrar para classes normais.
+
+# Backend (NestJS)
+- Arquitetura modular; separar controllers, services, repositories.
+- DTOs para entrada e saída; ValidationPipe global.
+- Nunca confiar em dados do frontend; recalcular no backend.
+- Variáveis de ambiente obrigatórias; falhar no arranque se faltarem.
+
+# Testes
+- Testar comportamento, não implementação.
+- Cada bug corrigido deve gerar um teste.
+- Usar `describe` extensivamente.
+
+# Escrita
+- Conciso; voz ativa; frases curtas.
+
+# Segurança e boas práticas
+- Não expor segredos no frontend.
+- Validar e sanitizar entrada no backend.
+- Um único MediaElementSource por elemento de áudio (grafo partilhado para AnalyserNode).
