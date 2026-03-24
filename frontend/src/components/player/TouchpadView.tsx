@@ -164,18 +164,24 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
           if (cancelled) return;
 
           switch (event.event) {
-            case "Started":
-              totalBytes = event.data.contentLength;
+            case "Started": {
+              const contentLength = event.data?.contentLength;
+              totalBytes = typeof contentLength === "number" ? contentLength : 0;
               downloadedBytes = 0;
               setUpdateProgress(0);
               break;
-            case "Progress":
-              downloadedBytes += event.data.chunkLength;
+            }
+            case "Progress": {
+              const chunkLength = event.data?.chunkLength;
+              if (typeof chunkLength === "number") {
+                downloadedBytes += chunkLength;
+              }
               if (totalBytes > 0) {
                 const progressValue = Math.min(100, Math.round((downloadedBytes / totalBytes) * 100));
                 setUpdateProgress(progressValue);
               }
               break;
+            }
             case "Finished":
               setUpdateStatus("installing");
               setUpdateProgress(100);
@@ -725,12 +731,12 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
               <p className="updater-version">Versao alvo: {updateVersion}</p>
             )}
 
-            {(updateStatus === "checking" || updateStatus === "downloading" || updateStatus === "installing") && (
+            {(updateStatus === "downloading" || updateStatus === "installing") && (
               <div className="updater-progress-wrap">
                 <div className="updater-progress-bar">
                   <span
                     className="updater-progress-fill"
-                    style={{ width: `${updateProgress ?? (updateStatus === "checking" ? 15 : 100)}%` }}
+                    style={{ width: `${updateProgress ?? 100}%` }}
                   />
                 </div>
                 <span className="updater-progress-label">
