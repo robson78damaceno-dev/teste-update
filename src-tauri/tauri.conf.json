@@ -64,9 +64,9 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5WTk2Yk03bTZlNmU2ZU0zSm1YcmRHY2lSQ3hRa2NHRVd6b2NlMUIxMDI2c0FBQkFBQUFBQUFBQUFBQUlBQUFBQTdPNDZHWTUyVkpYeG5nclNGNnE0OWFzRmtjRGdKQnU3TVkvMXFnM2RmdzdQdW9IVlo5RFRjT294bEZJay8vMk04b2xPTzVXQmc4TllKUTJjNnBBdVQxYkQzSXpiaEc2QzBxb0E1cmFHU3NMQzBjTjlkUUFzRUw4QTBJUzRPSHJHTkEwZ24xTFhDWjg9Cg==",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgzN0E0NTIyNkE0QjYwRjEKUldUeFlFdHFJa1Y2Z3p3cVY2azcwYjNQbnZTK1hSTmJBVENhL1VPWDE0TXJNMC9BTW5zaTRmd0IK",
       "endpoints": [
-        "https://github.com/OWNER/REPO/releases/latest/download/latest.json"
+        "https://github.com/robson78damaceno-dev/teste-update/releases/latest/download/latest.json"
       ],
       "windows": {
         "installMode": "passive"
