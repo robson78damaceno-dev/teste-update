@@ -1,8 +1,10 @@
 import type { TrackDto } from "./tracks-api";
 
+const DEFAULT_MJC_SONGS_API_URL = "http://10.3.7.57:3000";
+
 function getMjcSongsBase(): string {
   return (
-    process.env.NEXT_PUBLIC_MJC_SONGS_API_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_MJC_SONGS_API_URL ?? DEFAULT_MJC_SONGS_API_URL
   ).replace(/\/$/, "");
 }
 
