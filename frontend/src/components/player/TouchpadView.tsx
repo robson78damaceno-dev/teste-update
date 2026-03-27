@@ -33,7 +33,7 @@ type TouchpadViewProps = {
 
 type UpdateStatus = "idle" | "checking" | "available" | "downloading" | "installing" | "installed" | "error";
 
-const UPDATE_CHECK_START_DELAY_MS = 8_000;
+const UPDATE_CHECK_START_DELAY_MS = 3_000;
 const UPDATE_CHECK_INTERVAL_MS = 2 * 60_000;
 
 type UpdaterDownloadEvent =
@@ -117,11 +117,16 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [appVersion, setAppVersion] = useState<string | null>(null);
   const updateModalVisible =
-    updateStatus === "downloading"
+    updateStatus === "checking"
+    || updateStatus === "downloading"
     || updateStatus === "installing"
     || updateStatus === "installed"
     || updateStatus === "error";
   const updateToastVisible = updateStatus === "available";
+  const updateInProgress =
+    updateStatus === "checking"
+    || updateStatus === "downloading"
+    || updateStatus === "installing";
 
   const closeOverlay = useCallback((): void => {
     setLeftSidebarOpen(false);
@@ -798,27 +803,20 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
       <div className="touchpad-view-overlay" onClick={closeOverlay} onKeyDown={(e): void => { if (e.key === "Escape") closeOverlay(); }} role="button" tabIndex={-1} aria-label="Fechar menu" />
       {updateToastVisible && (
         <div className="updater-toast glass-surface" role="status" aria-live="polite">
-          <p className="updater-toast-title">Nova atualizacao disponivel</p>
-          {updateVersion !== null && (
-            <p className="updater-toast-version">Versao: {updateVersion}</p>
-          )}
+          <div className="updater-toast-head">
+            <span className="updater-switch-alert">
+              <span className="updater-switch-alert-dot" />
+              Switch Alert
+            </span>
+            <p className="updater-toast-title">Nova atualizacao disponivel</p>
+          </div>
           <div className="updater-toast-actions">
             <button
               type="button"
               className="updater-toast-btn updater-toast-btn-primary"
               onClick={(): void => { void handleInstallUpdate(); }}
             >
-              Atualizar agora
-            </button>
-            <button
-              type="button"
-              className="updater-toast-btn"
-              onClick={(): void => {
-                setUpdateStatus("idle");
-                setUpdateMessage("");
-              }}
-            >
-              Depois
+              Atualizar
             </button>
           </div>
         </div>
@@ -827,10 +825,9 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
         <div className="updater-overlay" role="alertdialog" aria-modal="true" aria-live="polite">
           <div className="updater-modal glass-surface">
             <h2 className="updater-title">Atualizando o MJC Player</h2>
-            <p className="updater-message">{updateMessage}</p>
-            {updateVersion !== null && (
-              <p className="updater-version">Versao alvo: {updateVersion}</p>
-            )}
+            <p className="updater-message">
+              {updateInProgress ? "Atualizando, o sistema sera reiniciado." : updateMessage}
+            </p>
 
             {(updateStatus === "downloading" || updateStatus === "installing") && (
               <div className="updater-progress-wrap">
