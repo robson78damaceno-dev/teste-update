@@ -31,7 +31,10 @@ type TouchpadViewProps = {
   bpmRange?: { min?: number; max?: number };
 };
 
-type UpdateStatus = "idle" | "checking" | "downloading" | "installing" | "installed" | "error";
+type UpdateStatus = "idle" | "checking" | "available" | "downloading" | "installing" | "installed" | "error";
+
+const UPDATE_CHECK_START_DELAY_MS = 45_000;
+const UPDATE_CHECK_INTERVAL_MS = 15 * 60_000;
 
 type UpdaterDownloadEvent =
   | { event: "Started"; data: { contentLength: number } }
@@ -118,6 +121,7 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
     || updateStatus === "installing"
     || updateStatus === "installed"
     || updateStatus === "error";
+  const updateToastVisible = updateStatus === "available";
 
   const closeOverlay = useCallback((): void => {
     setLeftSidebarOpen(false);
@@ -162,82 +166,105 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
     };
   }, []);
 
+  const handleInstallUpdate = useCallback(async (): Promise<void> => {
+    if (!isTauriDesktopRuntime()) return;
+    setUpdateStatus("checking");
+    setUpdateProgress(null);
+    setUpdateMessage("A verificar se existe uma nova versao...");
+
+    try {
+      const { check } = await import("@tauri-apps/plugin-updater");
+      const availableUpdate = await check();
+      if (availableUpdate === null) {
+        setUpdateStatus("idle");
+        setUpdateVersion(null);
+        setUpdateMessage("");
+        return;
+      }
+
+      setUpdateVersion(availableUpdate.version);
+      setUpdateStatus("downloading");
+      setUpdateMessage(`Atualizacao ${availableUpdate.version} encontrada. A transferir...`);
+
+      let downloadedBytes = 0;
+      let totalBytes = 0;
+      await availableUpdate.downloadAndInstall((event: UpdaterDownloadEvent): void => {
+        switch (event.event) {
+          case "Started": {
+            const contentLength = event.data?.contentLength;
+            totalBytes = typeof contentLength === "number" ? contentLength : 0;
+            downloadedBytes = 0;
+            setUpdateProgress(0);
+            break;
+          }
+          case "Progress": {
+            const chunkLength = event.data?.chunkLength;
+            if (typeof chunkLength === "number") {
+              downloadedBytes += chunkLength;
+            }
+            if (totalBytes > 0) {
+              const progressValue = Math.min(100, Math.round((downloadedBytes / totalBytes) * 100));
+              setUpdateProgress(progressValue);
+            }
+            break;
+          }
+          case "Finished":
+            setUpdateStatus("installing");
+            setUpdateProgress(100);
+            setUpdateMessage("Pacote transferido. A instalar atualizacao...");
+            break;
+          default:
+            break;
+        }
+      });
+
+      setUpdateStatus("installed");
+      setUpdateMessage("Atualizacao instalada. Reiniciando o app...");
+      try {
+        const { relaunch } = await import("@tauri-apps/plugin-process");
+        await relaunch();
+      } catch {
+        setUpdateMessage("Atualizacao instalada com sucesso. Reinicie o app para concluir.");
+      }
+    } catch (error: unknown) {
+      console.error("Falha ao atualizar o app:", error);
+      setUpdateStatus("error");
+      setUpdateMessage("Nao foi possivel atualizar agora. O app vai continuar normalmente.");
+    }
+  }, []);
+
   useEffect(() => {
+    if (!isTauriDesktopRuntime()) return;
     let cancelled = false;
 
     const runDesktopUpdateCheck = async (): Promise<void> => {
-      if (!isTauriDesktopRuntime()) return;
-      setUpdateStatus("checking");
-      setUpdateMessage("A verificar se existe uma nova versao...");
-      setUpdateProgress(null);
-
+      if (cancelled) return;
       try {
         const { check } = await import("@tauri-apps/plugin-updater");
         const availableUpdate = await check();
-        if (cancelled || availableUpdate === null) {
-          setUpdateStatus("idle");
-          return;
-        }
-
+        if (cancelled || availableUpdate === null) return;
         setUpdateVersion(availableUpdate.version);
-        setUpdateStatus("downloading");
-        setUpdateMessage(`Atualizacao ${availableUpdate.version} encontrada. A transferir...`);
-
-        let downloadedBytes = 0;
-        let totalBytes = 0;
-        await availableUpdate.downloadAndInstall((event: UpdaterDownloadEvent): void => {
-          if (cancelled) return;
-
-          switch (event.event) {
-            case "Started": {
-              const contentLength = event.data?.contentLength;
-              totalBytes = typeof contentLength === "number" ? contentLength : 0;
-              downloadedBytes = 0;
-              setUpdateProgress(0);
-              break;
-            }
-            case "Progress": {
-              const chunkLength = event.data?.chunkLength;
-              if (typeof chunkLength === "number") {
-                downloadedBytes += chunkLength;
-              }
-              if (totalBytes > 0) {
-                const progressValue = Math.min(100, Math.round((downloadedBytes / totalBytes) * 100));
-                setUpdateProgress(progressValue);
-              }
-              break;
-            }
-            case "Finished":
-              setUpdateStatus("installing");
-              setUpdateProgress(100);
-              setUpdateMessage("Pacote transferido. A instalar atualizacao...");
-              break;
-            default:
-              break;
-          }
-        });
-
-        if (cancelled) return;
-        setUpdateStatus("installed");
-        setUpdateMessage("Atualizacao instalada. Reiniciando o app...");
-        try {
-          const { relaunch } = await import("@tauri-apps/plugin-process");
-          await relaunch();
-        } catch {
-          if (cancelled) return;
-          setUpdateMessage("Atualizacao instalada com sucesso. Reinicie o app para concluir.");
-        }
+        setUpdateStatus("available");
+        setUpdateMessage("Nova atualizacao disponivel.");
       } catch (error: unknown) {
-        if (cancelled) return;
-        console.error("Falha ao atualizar o app:", error);
-        setUpdateStatus("error");
-        setUpdateMessage("Nao foi possivel atualizar agora. O app vai continuar normalmente.");
+        if (!cancelled) {
+          console.error("Falha ao verificar atualizacoes:", error);
+        }
       }
     };
 
-    void runDesktopUpdateCheck();
+    const startTimerId = window.setTimeout(() => {
+      void runDesktopUpdateCheck();
+    }, UPDATE_CHECK_START_DELAY_MS);
+
+    const periodicTimerId = window.setInterval(() => {
+      void runDesktopUpdateCheck();
+    }, UPDATE_CHECK_INTERVAL_MS);
+
     return () => {
       cancelled = true;
+      window.clearTimeout(startTimerId);
+      window.clearInterval(periodicTimerId);
     };
   }, []);
 
@@ -769,6 +796,33 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
   return (
     <div className={touchpadViewClass}>
       <div className="touchpad-view-overlay" onClick={closeOverlay} onKeyDown={(e): void => { if (e.key === "Escape") closeOverlay(); }} role="button" tabIndex={-1} aria-label="Fechar menu" />
+      {updateToastVisible && (
+        <div className="updater-toast glass-surface" role="status" aria-live="polite">
+          <p className="updater-toast-title">Nova atualizacao disponivel</p>
+          {updateVersion !== null && (
+            <p className="updater-toast-version">Versao: {updateVersion}</p>
+          )}
+          <div className="updater-toast-actions">
+            <button
+              type="button"
+              className="updater-toast-btn updater-toast-btn-primary"
+              onClick={(): void => { void handleInstallUpdate(); }}
+            >
+              Atualizar agora
+            </button>
+            <button
+              type="button"
+              className="updater-toast-btn"
+              onClick={(): void => {
+                setUpdateStatus("idle");
+                setUpdateMessage("");
+              }}
+            >
+              Depois
+            </button>
+          </div>
+        </div>
+      )}
       {updateModalVisible && (
         <div className="updater-overlay" role="alertdialog" aria-modal="true" aria-live="polite">
           <div className="updater-modal glass-surface">
