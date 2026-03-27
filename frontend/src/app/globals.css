@@ -6993,7 +6993,7 @@ button:disabled {
   left: 1rem;
   bottom: 1rem;
   z-index: 1900;
-  width: min(17.5rem, calc(100vw - 2rem));
+  width: min(14.5rem, calc(100vw - 2rem));
   border-radius: 11px;
   padding: 0.58rem 0.62rem;
   border: 1px solid rgba(170, 195, 225, 0.35);
@@ -7053,8 +7053,8 @@ button:disabled {
   align-self: flex-start;
   padding: 0.1rem 0.3rem;
   border-radius: 5px;
-  background: rgba(228, 234, 240, 0.9);
-  color: #1f2733;
+  background: rgba(174, 220, 255, 0.9);
+  color: #0f2a44;
 }
 
 .updater-toast-actions {

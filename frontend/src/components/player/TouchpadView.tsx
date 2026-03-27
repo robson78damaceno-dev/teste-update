@@ -806,7 +806,7 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
           <div className="updater-toast-head">
             <span className="updater-switch-alert">
               <span className="updater-switch-alert-dot" />
-              Switch Alert
+              Mensagem
             </span>
             <p className="updater-toast-title">Nova atualizacao disponivel</p>
           </div>
