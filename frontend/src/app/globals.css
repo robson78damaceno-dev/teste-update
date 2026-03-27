@@ -7006,12 +7006,24 @@ button:disabled {
   margin: 0;
   font-size: 0.88rem;
   font-weight: 700;
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.15rem 0.35rem;
+  border-radius: 6px;
+  background: rgba(230, 230, 230, 0.9);
+  color: #1f2733;
 }
 
 .updater-toast-version {
   margin: 0;
   font-size: 0.78rem;
-  opacity: 0.9;
+  opacity: 0.98;
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.1rem 0.3rem;
+  border-radius: 5px;
+  background: rgba(230, 230, 230, 0.82);
+  color: #1f2733;
 }
 
 .updater-toast-actions {
