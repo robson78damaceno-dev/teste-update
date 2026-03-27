@@ -3014,6 +3014,15 @@ button:disabled {
   white-space: nowrap;
 }
 
+.footer-bar-version {
+  margin-left: var(--space-2);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.68);
+  white-space: nowrap;
+}
+
 /* Stats legados (manter compatibilidade) */
 .footer-bar-stats {
   display: flex;

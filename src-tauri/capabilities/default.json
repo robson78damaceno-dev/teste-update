@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Permissoes para janela principal e updater.",
+  "description": "Permissoes para janela principal, updater e restart do app.",
   "windows": ["main", "splash"],
-  "permissions": ["core:default", "updater:default"]
+  "permissions": ["core:default", "updater:default", "process:default"]
 }

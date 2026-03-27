@@ -19,6 +19,8 @@ type FooterBarProps = {
   onVolumeNormToggle?(): void;
   /** Estado da ligação ao servidor */
   statusConnected?: boolean;
+  /** Versão do app em execução */
+  appVersion?: string | null;
 };
 
 function formatLongDuration(totalSeconds: number): string {
@@ -39,6 +41,7 @@ export function FooterBar(props: FooterBarProps): React.ReactElement {
     volumeNorm,
     onVolumeNormToggle,
     statusConnected = true,
+    appVersion = null,
   } = props;
 
   const resolvedCachedCount = cachedCount ?? soundsCount;
@@ -100,6 +103,11 @@ export function FooterBar(props: FooterBarProps): React.ReactElement {
               aria-hidden
             />
           </div>
+          {appVersion !== null && (
+            <span className="footer-bar-version" title="Versão do app">
+              v{appVersion}
+            </span>
+          )}
         </div>
       </div>
 

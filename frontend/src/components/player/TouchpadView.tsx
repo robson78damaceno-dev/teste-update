@@ -112,6 +112,7 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
   const [updateProgress, setUpdateProgress] = useState<number | null>(null);
   const [updateMessage, setUpdateMessage] = useState("");
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
+  const [appVersion, setAppVersion] = useState<string | null>(null);
   const updateModalVisible =
     updateStatus === "downloading"
     || updateStatus === "installing"
@@ -136,6 +137,30 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [leftSidebarOpen, closeOverlay]);
+
+  useEffect(() => {
+    if (!isTauriDesktopRuntime()) return;
+    let cancelled = false;
+
+    const loadAppVersion = async (): Promise<void> => {
+      try {
+        const { getVersion } = await import("@tauri-apps/api/app");
+        const version = await getVersion();
+        if (!cancelled) {
+          setAppVersion(version);
+        }
+      } catch {
+        if (!cancelled) {
+          setAppVersion(null);
+        }
+      }
+    };
+
+    void loadAppVersion();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,7 +219,14 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
 
         if (cancelled) return;
         setUpdateStatus("installed");
-        setUpdateMessage("Atualizacao instalada com sucesso. Reinicie o app para concluir.");
+        setUpdateMessage("Atualizacao instalada. Reiniciando o app...");
+        try {
+          const { relaunch } = await import("@tauri-apps/plugin-process");
+          await relaunch();
+        } catch {
+          if (cancelled) return;
+          setUpdateMessage("Atualizacao instalada com sucesso. Reinicie o app para concluir.");
+        }
       } catch (error: unknown) {
         if (cancelled) return;
         console.error("Falha ao atualizar o app:", error);
@@ -246,6 +278,12 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
       .then(setTrackMarkers)
       .catch(() => setTrackMarkers([]));
   }, [activeTrackId]);
+
+  useEffect(() => {
+    if (activeTrackId !== undefined) return;
+    if (initialTracks.length === 0) return;
+    setActiveTrackId(initialTracks[0].id);
+  }, [activeTrackId, initialTracks]);
 
   const handleAddMarker = useCallback(
     (ratio: number, label: string): void => {
@@ -864,6 +902,7 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
             volumeNorm={volumeNorm}
             onVolumeNormToggle={(): void => setVolumeNorm(!volumeNorm)}
             statusConnected={true}
+            appVersion={appVersion}
           />
         </div>
       </footer>
