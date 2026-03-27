@@ -253,6 +253,15 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
     [findTrack, activeTrackId]
   );
 
+  const trackMarkersExportUrl = useMemo(() => {
+    if (activeTrack === undefined) return undefined;
+    try {
+      return getTrackMarkersExportUrl(activeTrack.id);
+    } catch {
+      return undefined;
+    }
+  }, [activeTrack]);
+
   const getStreamUrl = useCallback((trackId: string): string => {
     return findTrack(trackId)?.streamUrl ?? "";
   }, [findTrack]);
@@ -828,7 +837,7 @@ export function TouchpadView(props: TouchpadViewProps): React.ReactElement {
             onSearchChange={setSearchQuery}
             volumePercent={broadcastVolume}
             onVolumeChange={setBroadcastVolume}
-            trackMarkersExportUrl={activeTrack ? getTrackMarkersExportUrl(activeTrack.id) : undefined}
+            trackMarkersExportUrl={trackMarkersExportUrl}
             markers={trackMarkers}
             onClearMarkers={handleClearMarkers}
             activeTrackId={activeTrackId}
