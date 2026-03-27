@@ -33,8 +33,8 @@ type TouchpadViewProps = {
 
 type UpdateStatus = "idle" | "checking" | "available" | "downloading" | "installing" | "installed" | "error";
 
-const UPDATE_CHECK_START_DELAY_MS = 45_000;
-const UPDATE_CHECK_INTERVAL_MS = 15 * 60_000;
+const UPDATE_CHECK_START_DELAY_MS = 8_000;
+const UPDATE_CHECK_INTERVAL_MS = 2 * 60_000;
 
 type UpdaterDownloadEvent =
   | { event: "Started"; data: { contentLength: number } }
