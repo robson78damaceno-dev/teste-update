@@ -39,7 +39,7 @@
   --sidebar-width-right: 22rem;
   --sidebar-width-right-min: 280px;
   /* --background-image-global: url("/backgrounds/masetop.jpg"); */
-  /* --background-image-main: url("/backgrounds/mesatop.jpg"); */
+  --background-image-main: url("/backgrounds/system-background.png");
 
   --z-content: 0;
   --z-sticky: 10;
@@ -174,7 +174,7 @@
   min-height: 0;
   overflow: hidden;
   padding: 0;
-  background: url("/backgrounds/hexagon-black-2.jpg") center/cover no-repeat;
+  background: url("/backgrounds/system-background.png") center/cover no-repeat;
 }
 
 .app-main::after {
